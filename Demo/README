@@ -1,0 +1,9 @@
+Team Names:
+    Hazaparu Sorin
+    Ionita Alexandru-Mihail
+    Luca Garavaglia
+    Tiberiu Petre
+
+In this demo you as the player are controlling a sqare that doges the other one. Pressing 'R' will slow the time down to make it easier to doge
+Pressing 'ESC' will close the program
+Start.sh only works on linux
