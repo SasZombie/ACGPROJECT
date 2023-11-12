@@ -23,6 +23,7 @@ void init();
 void window_callback(GLFWwindow* window, int new_width, int new_height);
 
 
+
 int main(int argc, char**argv)
 {
     bool wPressed = false;
@@ -97,26 +98,65 @@ int main(int argc, char**argv)
         1, 3, 2  
     };
 
-    GLuint vbo, vao, ibo;
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-    glGenBuffers(1, &ibo);
 
-    glBindVertexArray(vao);
+    constexpr GLfloat rectangleVertices[] =
+    {
+        0.0f,  0.05f, 0.0f,
+        -0.05f, -0.05f, 0.0f, 
+        0.05f, -0.05f, 0.0f, 
+        0.0f,  -0.1f, 0.0f   
+    };
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    constexpr GLuint rectangleIndices[] =
+    {
+        0, 1, 2,   
+        0, 3, 1    
+    };
+
+
+    GLuint vbo1, vao1, ibo1,
+        vbo2, vao2, ibo2;
+
+    glGenVertexArrays(1, &vao1);
+    glGenBuffers(1, &vbo1);
+    glGenBuffers(1, &ibo1);
+
+    glBindVertexArray(vao1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo1);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo1);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
+
+
+    glBindVertexArray(0);
+
+    glGenVertexArrays(1, &vao2);
+    glGenBuffers(1, &vbo2);
+    glGenBuffers(1, &ibo2);
+
+    glBindVertexArray(vao2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo2);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), rectangleVertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo2);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(rectangleIndices), rectangleIndices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
+
 
     glfwSetFramebufferSizeCallback(window, window_callback);
     glfwSetKeyCallback(window, keyCallback);
-    
+    // Turn me off if I dont work :c
+#if 1 
     sf::Music backgroundMusic;
     if (!backgroundMusic.openFromFile("../assets/Johnny Silverhand Theme(CelloViolin version) Cyberpunk 2077.mp3")) {
         return -1;
@@ -124,13 +164,16 @@ int main(int argc, char**argv)
     backgroundMusic.setVolume(10);
     backgroundMusic.play();
     backgroundMusic.setLoop(true);
+#endif
+
     while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS )
     {
+
         glfwSwapBuffers(window);
         glfwPollEvents();
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(programID);
-        glBindVertexArray(vao);
+        glBindVertexArray(vao1);
 
         if(!healh)
         {   
@@ -138,8 +181,7 @@ int main(int argc, char**argv)
             trans = glm::mat4(1.0f);
             trans = glm::translate(trans, glm::vec3(0.0f, 0.0f, 0.0f));
 
-            unsigned int transformLoc = glGetUniformLocation(programID, "transform");
-            glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+            glUniformMatrix4fv(glGetUniformLocation(programID, "transform"), 1, GL_FALSE, glm::value_ptr(trans));
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             render();
             
@@ -230,34 +272,30 @@ int main(int argc, char**argv)
             trans2 = glm::translate(glm::mat4(1.0f), glm::vec3(a, b, 0.0f));
             trans2 = glm::rotate(trans2, rotation+=5, glm::vec3(0.0f, 0.0f, 1.0f));
             glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans2));
+
+            glm::vec4 color = glm::vec4(0.5f, 0, 0.5f, 1.0);
+            glUniform4fv(glGetUniformLocation(programID, "color"), 1, glm::value_ptr(color));
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-            
-        
-
+		    glBindVertexArray(vao2);
             for(short i = 0; i < healh; ++i)
             {
                 healtDisplay = glm::translate(glm::mat4(1.0f), glm::vec3(-0.9f + i * 0.15f, 0.9f, 0.0f));
-                unsigned int transforationHealth = glGetUniformLocation(programID, "transform");
-                glUniformMatrix4fv(transforationHealth, 1, GL_FALSE, glm::value_ptr(healtDisplay));
+                glUniformMatrix4fv(glGetUniformLocation(programID, "transform"), 1, GL_FALSE, glm::value_ptr(healtDisplay));
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             }
-        
-            // Color
-            unsigned int transformLoc2 = glGetUniformLocation(programID, "color");
-            glm::vec4 color = glm::vec4(0.5f, 0, 0.5f, 1.0);
-            glUniform4fv(transformLoc2, 1, glm::value_ptr(color));
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
             
             if(rotation > 360)
                 rotation = 0;
         }
     }
-
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ibo);
-    glDeleteVertexArrays(1, &vao);
+    
+    glDeleteBuffers(1, &vbo1);
+    glDeleteBuffers(1, &ibo1);
+    glDeleteVertexArrays(1, &vao1);
+    glDeleteBuffers(1, &vbo2);
+    glDeleteBuffers(1, &ibo2);
+    glDeleteVertexArrays(1, &vao2);
     glDeleteProgram(programID);
     backgroundMusic.stop();
     glfwTerminate();
